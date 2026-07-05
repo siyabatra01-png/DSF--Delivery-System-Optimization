@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px;">
+    <h2>📦 Active Delivery Routing Console</h2>
+    
+    {% if orders %}
+        {% for order in orders %}
+        <div style="border: 1px solid #eee; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+            <h4>Order #{{ order.id }} — {{ order.restaurant_name }}</h4>
+            <p><strong>Items:</strong> {{ order.items_summary }}</p>
+            <p><strong>Total:</strong> Rs. {{ order.total_cost }}</p>
+            <p><strong>Current Status:</strong> <span style="color: #8a1131;">{{ order.status }}</span></p>
+            
+            {% if not order.rider_id %}
+            <form action="{{ url_for('rider_accept_order', order_id=order.id) }}" method="POST" style="margin-bottom:12px;">
+                <button type="submit" style="background:#059669;color:#ffffff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px;">✅ Accept Assignment</button>
+            </form>
+            {% else %}
+            <form action="/rider/order/update-status/{{ order.id }}" method="POST" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <select name="status" style="padding:8px 12px;border-radius:6px;border:1px solid #cbd5e1;background:white;font-size:13px;max-width:180px;">
+                    {% for status in ['Placed', 'Preparing', 'Dispatched', 'On the Way', 'Delivered'] %}
+                    <option value="{{ status }}" {% if order.status == status %}selected{% endif %}>{{ status }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" style="background:#334155;color:#ffffff;border:none;padding:9px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px;">Update ⚡</button>
+                <a href="{{ url_for('tracking_dashboard', order_id=order.id) }}" style="background:#8a1131;color:#ffffff;padding:9px 14px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;">📍 Track</a>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No active delivery assignments found.</p>
+    {% endif %}
+</div>
+{% endblock %}
