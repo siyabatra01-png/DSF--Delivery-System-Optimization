@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+    body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+    #map { width: 100%; height: 55vh; border-radius: 12px; }
+    .status-card { 
+        background: white; 
+        border-radius: 24px 24px 0 0; 
+        position: absolute; 
+        bottom: 0; 
+        left: 0; 
+        right: 0; 
+        z-index: 999; 
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.08); 
+        padding: 24px; 
+    }
+    .star { cursor: pointer; font-size: 35px; color: #ccc; transition: color 0.2s; }
+    .star.active { color: #f1c40f; }
+</style>
+
+<div class="container-fluid p-0">
+    <div style="max-width: 500px; margin: 0 auto; background: white; min-height: 100vh; position: relative;">
+        <a href="/" style="position: absolute; top: 15px; left: 15px; z-index: 9999; width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">←</a>
+        
+        <div id="map"></div>
+
+        <div class="status-card">
+            <h2 id="eta-timer" style="color: #222; margin-bottom: 8px;">5 — 15 mins</h2>
+            <p id="status-headline" style="font-weight: bold; font-size: 18px;">Order Placed</p>
+            <p id="status-subtext">Your order has been received by the restaurant.</p>
+            
+            <div style="margin-top: 20px; font-size: 14px;">
+                <small><strong>Order ID:</strong> #{{ order.id }}</small><br>
+                <small><strong>Restaurant:</strong> {{ order.restaurant_name }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Modal -->
+<div id="feedbackModal" style="display: none; position: fixed; z-index: 100000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center;">
+    <div style="background: white; padding: 30px; border-radius: 20px; width: 360px; text-align: center;">
+        <h5>Finalised Food Feedback</h5>
+        <div class="d-flex justify-content-center gap-2 mb-4" id="rating-stars">
+            <span class="star" data-value="1">★</span>
+            <span class="star" data-value="2">★</span>
+            <span class="star" data-value="3">★</span>
+            <span class="star" data-value="4">★</span>
+            <span class="star" data-value="5">★</span>
+        </div>
+        <textarea id="feedbackComments" placeholder="Write a quick review..." style="width: 100%; height: 80px; padding: 10px; border-radius: 8px;"></textarea>
+        <button onclick="submitCustomerFeedback()" style="background: #8a1131; color: white; border: none; padding: 12px 30px; border-radius: 8px; margin-top: 15px; font-weight: bold;">Submit Review 🚀</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize Map
+    var map = L.map('map', { zoomControl: true }).setView([24.8607, 67.0011], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    var restaurantIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize: [34, 34] });
+    var customerIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png', iconSize: [34, 34] });
+    var riderIcon = L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3165/3165640.png', iconSize: [40, 40] });
+
+    var restaurantLoc = [24.8732, 67.0682];
+    var customerLoc = [24.8569, 67.0294];
+
+    L.marker(restaurantLoc, {icon: restaurantIcon}).addTo(map).bindPopup("Restaurant");
+    L.marker(customerLoc, {icon: customerIcon}).addTo(map).bindPopup("Customer Location");
+    var riderMarker = L.marker(restaurantLoc, {icon: riderIcon}).addTo(map).bindPopup("Delivery Rider");
+
+    // Animation Path
+    function generateSteps(start, end, count) {
+        var steps = [];
+        for (var i = 0; i <= count; i++) {
+            var ratio = i / count;
+            steps.push([start[0] + (end[0] - start[0]) * ratio, start[1] + (end[1] - start[1]) * ratio]);
+        }
+        return steps;
+    }
+    var pathSteps = generateSteps(restaurantLoc, customerLoc, 80);
+
+    // Delivery Simulation Stages
+    setTimeout(() => {
+        document.getElementById('status-headline').innerText = "Preparing Food";
+        document.getElementById('status-subtext').innerText = "The chef is preparing your delicious meal.";
+        document.getElementById('eta-timer').innerText = "15 — 20 mins";
+    }, 4000);
+
+    setTimeout(() => {
+        document.getElementById('status-headline').innerText = "Order Picked Up";
+        document.getElementById('status-subtext').innerText = "Our delivery hero has picked up your food.";
+        document.getElementById('eta-timer').innerText = "8 — 12 mins";
+
+        let step = 0;
+        let moveInterval = setInterval(() => {
+            if (step < pathSteps.length) {
+                riderMarker.setLatLng(pathSteps[step]);
+                map.panTo(pathSteps[step]);
+                step++;
+            } else {
+                clearInterval(moveInterval);
+            }
+        }, 100);
+    }, 11000);
+
+    setTimeout(() => {
+        document.getElementById('status-headline').innerText = "Delivered 🎉";
+        document.getElementById('status-subtext').innerText = "Your order has been delivered successfully!";
+        document.getElementById('eta-timer').innerText = "Delivered!";
+        document.getElementById('eta-timer').style.color = "#27ae60";
+        triggerFeedbackPopup();
+    }, 22000);
+
+    // Feedback System
+    let selectedRating = 0;
+    document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', function() {
+            selectedRating = parseInt(this.getAttribute('data-value'));
+            document.querySelectorAll('.star').forEach(s => {
+                s.classList.toggle('active', parseInt(s.getAttribute('data-value')) <= selectedRating);
+            });
+        });
+    });
+
+    function triggerFeedbackPopup() {
+        document.getElementById('feedbackModal').style.display = 'flex';
+    }
+
+    function submitCustomerFeedback() {
+        if (selectedRating === 0) {
+            alert("Please select a star rating!");
+            return;
+        }
+        const comments = document.getElementById('feedbackComments').value;
+
+        fetch('/submit-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `order_id={{ order.id }}&rating=${selectedRating}&comments=${encodeURIComponent(comments)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message || "Thank you for your feedback! ❤️");
+            document.getElementById('feedbackModal').style.display = 'none';
+        })
+        .catch(err => alert("Feedback submitted successfully!"));
+    }
+</script>
+{% endblock %}
