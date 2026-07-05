@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .cart-wrap { background: white; padding: 35px; border-radius: 10px; box-shadow: var(--card-shadow); }
+    .cart-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+    .cart-table th, .cart-table td { padding: 14px; text-align: left; border-bottom: 1px solid #eee; }
+    .cart-table th { background-color: #fcf8f9; color: var(--primary); font-weight: 600; }
+    .summary-box { text-align: right; padding: 20px 0; border-top: 2px solid #eee; font-size: 22px; font-weight: bold; }
+    .action-row { display: flex; justify-content: space-between; margin-top: 20px; }
+    .btn-act { padding: 14px 30px; font-size: 15px; font-weight: 700; border-radius: 8px; text-decoration: none; cursor: pointer; transition: all 0.2s; border: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-add-more { background: #475569; color: #ffffff !important; }
+    .btn-add-more:hover { background: #334155; }
+    .btn-checkout { background: #8a1131; color: #ffffff !important; }
+    .btn-checkout:hover { background: #6b0c24; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(138,17,49,0.3); }
+</style>
+
+<div class="cart-wrap">
+    <h2 style="color: var(--slate); margin-top: 0; padding-bottom: 15px; border-bottom: 2px solid #eee;">🛒 Finalised Food Basket</h2>
+    {% if cart_items %}
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Item Description</th>
+                    <th>Vendor Outpost</th>
+                    <th>Cuisine Category</th>
+                    <th>Subtotal Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr>
+                    <td><strong>{{ item['name'] }}</strong></td>
+                    <td>🏢 {{ item['vendor'] }}</td>
+                    <td>✨ {{ item['category'] }}</td>
+                    <td style="color: var(--primary); font-weight: bold;">Rs. {{ item['price'] }}</td>
+                    <td>
+                        <form action="{{ url_for('remove_cart_item', index=loop.index0) }}" method="POST">
+                            <button type="submit" style="border: none; background: #dc2626; color: #ffffff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px;">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="summary-box">Grand Total: <span style="color: var(--primary);">Rs. {{ total_amount }}</span></div>
+        <div class="action-row">
+            <a href="/menu" class="btn-act btn-add-more">⬅️ Add More Items</a>
+            <form action="/order/checkout" method="POST" style="margin: 0;">
+                <button type="submit" class="btn-act btn-checkout">Proceed to Checkout 🚀</button>
+            </form>
+        </div>
+    {% else %}
+        <div style="text-align:center; padding: 20px 0;">
+            <h3>Your active basket is empty.</h3>
+            <a href="/menu" class="btn-act btn-checkout" style="display:inline-block; margin-top: 15px;">Browse Digital Menu 🍕</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
