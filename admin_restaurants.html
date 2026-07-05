@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-family: 'Syne', sans-serif; font-size: 22px; margin-bottom: 4px; }
+    .page-header p  { font-size: 13.5px; color: var(--text-muted); }
+    .back-link { color: var(--crimson); font-weight: 600; font-size: 13.5px; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+
+    .add-form-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        padding: 26px 28px;
+        margin-bottom: 32px;
+        box-shadow: var(--shadow-sm);
+    }
+    .add-form-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 18px; color: var(--text); }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 16px;
+    }
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+
+    .check-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 24px;
+    }
+    .check-wrap input[type=checkbox] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--crimson);
+        cursor: pointer;
+        flex-shrink: 0;
+        padding: 0;
+    }
+
+    .section-category {
+        font-family: 'Syne', sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+        padding: 14px 18px;
+        background: #f8fafc;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .restaurant-row {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 16px 18px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .rest-name { font-weight: 700; font-size: 15px; flex: 1; min-width: 140px; }
+    .rest-meta { font-size: 12.5px; color: var(--text-muted); }
+    .avail-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .avail-open   { background: #ecfdf5; color: #059669; }
+    .avail-closed { background: #fef2f2; color: #dc2626; }
+
+    .update-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .update-form input { width: 160px; flex-shrink: 0; }
+    .update-form .check-wrap { padding-top: 0; }
+</style>
+
+<a href="{{ url_for('admin_hub') }}" class="back-link">← Back to Admin Panel</a>
+
+<div class="page-header" style="margin-top:16px;">
+    <h2>🏪 Restaurant Management</h2>
+    <p>Add, update, or remove vendors from the FoodExpress network.</p>
+</div>
+
+<!-- Add Restaurant Form -->
+<div class="add-form-card">
+    <h3>➕ Add New Restaurant</h3>
+    <form method="POST">
+        <div class="form-grid">
+            <div class="form-field">
+                <label>Cuisine Category</label>
+                <input name="category" placeholder="e.g. Fast Food" required>
+            </div>
+            <div class="form-field">
+                <label>Restaurant Name</label>
+                <input name="name" placeholder="e.g. Burger Barn" required>
+            </div>
+            <div class="form-field">
+                <label>Latitude</label>
+                <input name="lat" placeholder="24.8607" type="number" step="any">
+            </div>
+            <div class="form-field">
+                <label>Longitude</label>
+                <input name="lng" placeholder="67.0011" type="number" step="any">
+            </div>
+            <div class="form-field">
+                <label>Operating Hours</label>
+                <input name="hours" placeholder="11:00 AM – 11:00 PM">
+            </div>
+            <div class="check-wrap">
+                <input type="checkbox" name="available" id="avail_new" checked>
+                <label for="avail_new" style="margin:0;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Available / Open</label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Restaurant</button>
+    </form>
+</div>
+
+<!-- Existing Restaurants -->
+{% for category, restaurants in vendors.items() %}
+<div class="section-category">
+    {% if category == 'Fast Food' %}🍔{% elif category == 'Desi Cuisine' %}🍛{% else %}☕{% endif %}
+    {{ category }}
+    <span style="font-size:12px;font-weight:500;color:var(--text-muted);margin-left:6px;">({{ restaurants|length }} restaurants)</span>
+</div>
+
+{% for name, details in restaurants.items() %}
+<div class="restaurant-row">
+    <div>
+        <div class="rest-name">{{ name }}</div>
+        <div class="rest-meta">{{ details.menu|length }} menu items · {{ details.hours or 'Hours N/A' }}</div>
+    </div>
+    <span class="avail-badge {{ 'avail-open' if details.available else 'avail-closed' }}">
+        {{ '🟢 Open' if details.available else '🔴 Closed' }}
+    </span>
+
+    <form action="{{ url_for('update_restaurant') }}" method="POST" class="update-form" style="margin:0;">
+        <input type="hidden" name="category" value="{{ category }}">
+        <input type="hidden" name="name" value="{{ name }}">
+        <input name="hours" value="{{ details.hours }}" placeholder="Hours" style="width:180px;">
+        <div class="check-wrap">
+            <input type="checkbox" name="available" id="avail_{{ loop.index }}" {% if details.available %}checked{% endif %}>
+            <label for="avail_{{ loop.index }}" style="margin:0;font-size:13px;cursor:pointer;">Open</label>
+        </div>
+        <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+    </form>
+
+    <form action="{{ url_for('delete_restaurant') }}" method="POST" style="margin:0;" onsubmit="return confirm('Delete {{ name }}?')">
+        <input type="hidden" name="category" value="{{ category }}">
+        <input type="hidden" name="name" value="{{ name }}">
+        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+    </form>
+</div>
+{% endfor %}
+
+{% endfor %}
+{% endblock %}
