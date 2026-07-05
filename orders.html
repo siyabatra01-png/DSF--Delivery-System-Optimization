@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="background:white; padding:30px; border-radius:8px; box-shadow:var(--card-shadow);">
+    <h2 style="margin-top:0; color:var(--primary);">Order History</h2>
+    {% if orders %}
+    <table style="width:100%; border-collapse:collapse;">
+        <tr style="background:#f8f9fa;">
+            <th style="padding:12px; text-align:left;">ID</th>
+            <th style="padding:12px; text-align:left;">Restaurant</th>
+            <th style="padding:12px; text-align:left;">Items</th>
+            <th style="padding:12px; text-align:left;">Total</th>
+            <th style="padding:12px; text-align:left;">Status</th>
+            <th style="padding:12px;">Actions</th>
+        </tr>
+        {% for order in orders %}
+        <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:12px;">#{{ order.id }}</td>
+            <td style="padding:12px;">{{ order.restaurant_name }}</td>
+            <td style="padding:12px;">{{ order.items_summary }}</td>
+            <td style="padding:12px;">Rs. {{ order.total_cost }}</td>
+            <td style="padding:12px;">{{ order.status }}</td>
+            <td style="padding:12px; text-align:center;">
+                <a href="{{ url_for('tracking_dashboard', order_id=order.id) }}">Track</a>
+                {% if order.status in ['Placed', 'Preparing'] %}
+                <form action="{{ url_for('cancel_order', order_id=order.id) }}" method="POST" style="display:inline; margin-left:8px;">
+                    <button type="submit" style="border:0; background:#dc2626; color:#ffffff; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:12px;">Cancel</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+        <p>No orders have been placed yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
