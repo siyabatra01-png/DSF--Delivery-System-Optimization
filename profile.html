@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:650px; margin:0 auto; background:white; padding:30px; border-radius:8px; box-shadow:var(--card-shadow);">
+    <h2 style="margin-top:0; color:var(--primary);">Profile</h2>
+    <form method="POST">
+        <label>Name</label>
+        <input name="name" value="{{ user.name }}" required style="width:100%; padding:10px; margin:6px 0 14px; box-sizing:border-box;">
+        <label>Email</label>
+        <input type="email" name="email" value="{{ user.email }}" required style="width:100%; padding:10px; margin:6px 0 14px; box-sizing:border-box;">
+        <label>Contact</label>
+        <input name="contact" value="{{ user.contact }}" required style="width:100%; padding:10px; margin:6px 0 14px; box-sizing:border-box;">
+        <label>Age</label>
+        <input type="number" name="age" value="{{ user.age or '' }}" style="width:100%; padding:10px; margin:6px 0 14px; box-sizing:border-box;">
+        <label>Address</label>
+        <textarea name="address" required style="width:100%; min-height:90px; padding:10px; margin:6px 0 18px; box-sizing:border-box;">{{ user.address }}</textarea>
+        <button type="submit" style="background:linear-gradient(135deg,#8a1131,#6b0c24); color:#ffffff; border:0; padding:13px 28px; border-radius:8px; cursor:pointer; font-weight:700; font-size:15px;">Save Profile ✓</button>
+    </form>
+</div>
+{% endblock %}
