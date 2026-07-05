@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .admin-hero {
+        background: linear-gradient(135deg, var(--crimson) 0%, var(--crimson-dark) 100%);
+        border-radius: var(--radius-lg);
+        padding: 32px 36px;
+        color: white;
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .admin-hero h1 { font-family: 'Syne', sans-serif; font-size: 26px; margin-bottom: 4px; }
+    .admin-hero p  { opacity: 0.75; font-size: 14px; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+    .stat-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 24px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .stat-card .stat-icon { font-size: 28px; margin-bottom: 6px; }
+    .stat-card .stat-value { font-size: 30px; font-weight: 800; color: var(--crimson); line-height: 1; }
+    .stat-card .stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .nav-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+        margin-bottom: 36px;
+    }
+    .nav-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 24px 26px;
+        text-decoration: none;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .nav-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        border-color: var(--crimson-light);
+    }
+    .nav-card-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    .nav-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .nav-card p  { font-size: 12.5px; color: var(--text-muted); }
+
+    .section-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .approval-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        gap: 16px;
+    }
+    .approval-row:last-child { border-bottom: none; }
+    .rider-info strong { font-size: 14px; display: block; }
+    .rider-info span { font-size: 12.5px; color: var(--text-muted); }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 24px;
+        color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 40px; margin-bottom: 10px; }
+    .empty-state p { font-size: 14px; }
+</style>
+
+<div class="admin-hero">
+    <div>
+        <h1>Master Administration Panel</h1>
+        <p>System overview and controls for FoodExpress network operations.</p>
+    </div>
+    <div style="font-size:48px; opacity:0.3;">⚙️</div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Registered Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value">{{ active_orders }}</div>
+        <div class="stat-label">Active Orders</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value">{{ pending_riders|length }}</div>
+        <div class="stat-label">Pending Approvals</div>
+    </div>
+</div>
+
+<!-- Navigation Cards -->
+<div class="nav-cards">
+    <a href="{{ url_for('admin_analytics') }}" class="nav-card">
+        <div class="nav-card-icon" style="background:#eff6ff;">📊</div>
+        <div>
+            <h3>Platform Analytics</h3>
+            <p>Order totals and platform metrics</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin_orders_log') }}" class="nav-card">
+        <div class="nav-card-icon" style="background:#f0fdf4;">📦</div>
+        <div>
+            <h3>Orders Log</h3>
+            <p>All orders from MongoDB store</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin_mongodb_analytics') }}" class="nav-card">
+        <div class="nav-card-icon" style="background:#fffbeb;">🍕</div>
+        <div>
+            <h3>MongoDB Trends</h3>
+            <p>Cuisine demand & peak hours</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin_users') }}" class="nav-card">
+        <div class="nav-card-icon" style="background:#fef2f2;">👤</div>
+        <div>
+            <h3>User Management</h3>
+            <p>{{ total_users }} users · activate / deactivate</p>
+        </div>
+    </a>
+    <a href="{{ url_for('admin_restaurants') }}" class="nav-card">
+        <div class="nav-card-icon" style="background:var(--crimson-light);">🏪</div>
+        <div>
+            <h3>Restaurant Management</h3>
+            <p>{{ active_orders }} active orders in network</p>
+        </div>
+    </a>
+</div>
+
+<!-- Pending Rider Approvals -->
+<div class="section-title">⏳ Pending Rider Approvals</div>
+<div class="card">
+    {% if pending_riders %}
+        {% for rider in pending_riders %}
+        <div class="approval-row">
+            <div class="rider-info">
+                <strong>🚴 {{ rider.username }}</strong>
+                <span>{{ rider.email }} · Registered as Delivery Partner</span>
+            </div>
+            <form action="{{ url_for('approve_rider', rider_id=rider.id) }}" method="POST" style="margin:0;">
+                <button type="submit" class="btn btn-success btn-sm">✅ Approve</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🎉</div>
+            <p>No pending rider approvals right now.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
