@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: var(--card-shadow);">
+    <h2 style="color: var(--slate);">Rider Fleet Portal</h2>
+    <p>Current status: <strong>{{ 'Online' if rider.is_online else 'Offline' }}</strong> · Active assignments: <strong>{{ active_jobs }}</strong></p>
+    
+    <div style="display: flex; gap: 20px; margin-top: 30px; flex-wrap:wrap;">
+        <a href="/rider/delivery" style="flex: 1; min-width:220px; padding: 25px; background: #1e293b; color:#ffffff; border-radius: 10px; text-align: center; text-decoration: none; font-size: 16px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px;">
+            📦 View Delivery Assignments
+        </a>
+        <form action="/rider/toggle-status" method="POST" style="flex: 1; min-width:220px;">
+            {% if rider.is_online %}
+                <button type="submit" style="width:100%; padding: 25px; background: #dc2626; color:#ffffff; border: none; border-radius: 10px; font-size: 16px; font-weight:700; cursor: pointer;">
+                    🔴 Go Offline
+                </button>
+            {% else %}
+                <button type="submit" style="width:100%; padding: 25px; background: #059669; color:#ffffff; border: none; border-radius: 10px; font-size: 16px; font-weight:700; cursor: pointer;">
+                    🟢 Go Online
+                </button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}
