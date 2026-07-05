@@ -1,0 +1,9 @@
+flask
+Flask-SQLAlchemy
+Flask-Bcrypt
+SQLAlchemy
+Matplotlib
+Pandas
+Numpy
+pymongo
+pyodbc
