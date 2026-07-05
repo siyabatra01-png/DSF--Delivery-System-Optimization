@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .page-header h2 { font-family: 'Syne', sans-serif; font-size: 22px; margin: 0; }
+    .back-link { color: var(--crimson, #dc2626); font-weight: 600; font-size: 13.5px; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+
+    .filters-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+    }
+    .rider-avatar {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.customer-avatar {
+    background: #dbeafe;
+    color: #2563eb;
+}
+    .filter-btn {
+        padding: 7px 16px;
+        font-size: 12.5px;
+        font-weight: 600;
+        border-radius: 20px;
+        border: 1px solid var(--border, #e5e7eb);
+        background: var(--surface, #ffffff);
+        color: var(--text-muted, #4b5563);
+        cursor: pointer;
+        transition: all 0.18s;
+        font-family: inherit;
+    }
+    .filter-btn.active, .filter-btn:hover {
+        background: var(--crimson, #dc2626);
+        border-color: var(--crimson, #dc2626);
+        color: white;
+    }
+
+    .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface, #ffffff);
+        border: 1px solid var(--border, #e5e7eb);
+        border-radius: var(--radius-sm, 4px);
+        padding: 9px 14px;
+        margin-bottom: 18px;
+    }
+    .search-bar input {
+        border: none; background: transparent; font-size: 14px; outline: none; flex: 1; padding: 0; width: 100%;
+    }
+
+    .table-wrap {
+        background: var(--surface, #ffffff);
+        border-radius: var(--radius, 8px);
+        border: 1px solid var(--border, #e5e7eb);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+    }
+    .table-wrap table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .table-wrap th, .table-wrap td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border, #e5e7eb);
+        vertical-align: middle;
+    }
+    .table-wrap tr:last-child td {
+        border-bottom: none;
+    }
+
+    .user-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .role-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11.5px;
+        font-weight: 600;
+    }
+    .role-customer  { background: #eff6ff; color: #2563eb; }
+    .role-rider     { background: #f0fdf4; color: #059669; }
+
+    /* Status badges */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        font-size: 11.5px;
+        font-weight: 700;
+        border-radius: 20px;
+    }
+    .badge-success { background: #ecfdf5; color: #059669; }
+    .badge-warning { background: #fffbeb; color: #d97706; }
+    .badge-danger  { background: #fef2f2; color: #dc2626; }
+</style>
+
+<a href="{{ url_for('admin_hub') }}" class="back-link">← Back to Admin Panel</a>
+
+<div class="page-header" style="margin-top: 14px;">
+    <div>
+        <h2>👥 User Management</h2>
+        <p style="color:var(--text-muted, #4b5563);font-size:13px;margin-top:4px;">
+            {{ users|length if users else 0 }} total users — activate, deactivate, and review accounts
+        </p>
+    </div>
+</div>
+
+<div class="search-bar">
+    <span style="color:var(--text-muted, #4b5563);">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search by name, username, or email…" oninput="filterUsers()">
+</div>
+
+<div class="filters-row">
+    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn" onclick="setFilter('customer', this)">🧑 Customers</button>
+    <button class="filter-btn" onclick="setFilter('rider', this)">🚴 Riders</button>
+    <button class="filter-btn" onclick="setFilter('active', this)">✅ Active</button>
+    <button class="filter-btn" onclick="setFilter('pending', this)">⏳ Pending</button>
+    <button class="filter-btn" onclick="setFilter('inactive', this)">🚫 Inactive</button>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th style="text-align:center;">Action</th>
+            </tr>
+        </thead>
+        <tbody id="usersBody">
+            {% for user in users %}
+            {% if user.username != 'admin' %}
+            <tr class="user-row"
+                data-role="{{ 'rider' if user.role == 'delivery_partner' else 'customer' }}"
+                data-status="{{ (user.status | lower) if user.status else 'inactive' }}"
+                data-search="{{ (user.username|lower) if user.username else '' }} {{ (user.name|lower) if user.name else '' }} {{ (user.email|lower) if user.email else '' }}">
+                <td>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="user-avatar {% if user.role == 'delivery_partner' %}rider-avatar{% else %}customer-avatar{% endif %}">
+    {{ user.name[:1].upper() if user.name else '?' }}
+</div>
+                        <div>
+                            <div style="font-weight:700;font-size:14px;">{{ user.name or 'Unknown User' }}</div>
+                            <div style="font-size:12px;color:var(--text-muted, #4b5563);">@{{ user.username or 'unknown' }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if user.role == 'delivery_partner' %}
+                        <span class="role-pill role-rider">🚴 Rider</span>
+                    {% else %}
+                        <span class="role-pill role-customer">🧑 Customer</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:13px;color:var(--text-muted, #4b5563);">{{ user.email or '—' }}</td>
+                <td style="font-size:13px;color:var(--text-muted, #4b5563);">{{ user.contact or '—' }}</td>
+                <td>
+                    {% if user.status and user.status | lower == 'active' %}
+                        <span class="badge badge-success">Active</span>
+                    {% elif user.status and user.status | lower == 'pending' %}
+                        <span class="badge badge-warning">Pending</span>
+                    {% else %}
+                        <span class="badge badge-danger">Inactive</span>
+                    {% endif %}
+                </td>
+                <td style="text-align:center;">
+                    <form action="{{ url_for('toggle_user_status', user_id=user.id) }}" method="POST" style="margin:0;">
+                        {% if user.status and user.status | lower == 'active' %}
+                        <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
+                        {% else %}
+                        <button type="submit" class="btn btn-success btn-sm">Activate</button>
+                        {% endif %}
+                    </form>
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+let currentFilter = 'all';
+
+function setFilter(filter, el) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    applyFilters();
+}
+
+function filterUsers() { applyFilters(); }
+
+function applyFilters() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const roleFilters = ['customer', 'rider'];
+    const statusFilters = ['active', 'pending', 'inactive'];
+
+    document.querySelectorAll('.user-row').forEach(row => {
+        const role   = row.dataset.role;
+        const status = row.dataset.status;
+        const search = row.dataset.search;
+
+        let matchFilter = false;
+        if (currentFilter === 'all') {
+            matchFilter = true;
+        } else if (roleFilters.includes(currentFilter)) {
+            matchFilter = (role === currentFilter);
+        } else if (statusFilters.includes(currentFilter)) {
+            matchFilter = (status === currentFilter);
+        }
+
+        const matchSearch = !q || search.includes(q);
+        row.style.display = (matchFilter && matchSearch) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}
