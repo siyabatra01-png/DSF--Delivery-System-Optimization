@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 420px; margin: 50px auto;">
+    <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border: 1px solid #e8eaf0;">
+        <div style="text-align:center; margin-bottom:28px;">
+            <div style="width:56px;height:56px;background:linear-gradient(135deg,#8a1131,#6b0c24);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px;">🍷</div>
+            <h2 style="color:#1e293b; margin:0; font-size:22px; font-weight:800;">Welcome Back</h2>
+            <p style="color:#64748b; font-size:13.5px; margin-top:6px;">Sign in to your FoodExpress account</p>
+        </div>
+        <form action="/auth/login" method="POST">
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; margin-bottom:6px; font-weight:600; font-size:13px; color:#475569;">Username</label>
+                <input type="text" name="username" required placeholder="Enter your username" style="width:100%; padding:11px 14px; border:1.5px solid #e2e8f0; border-radius:8px; box-sizing:border-box; font-size:14px; background:#f8fafc;">
+            </div>
+            <div style="margin-bottom: 24px;">
+                <label style="display:block; margin-bottom:6px; font-weight:600; font-size:13px; color:#475569;">Password</label>
+                <input type="password" name="password" required placeholder="Enter your password" style="width:100%; padding:11px 14px; border:1.5px solid #e2e8f0; border-radius:8px; box-sizing:border-box; font-size:14px; background:#f8fafc;">
+            </div>
+            <button type="submit" style="width:100%; padding:13px; background:linear-gradient(135deg,#8a1131,#6b0c24); border:none; color:#ffffff; font-weight:700; border-radius:8px; cursor:pointer; font-size:15px; letter-spacing:0.3px;">Sign In 🔑</button>
+        </form>
+        <p style="text-align:center; margin-top:20px; color:#64748b; font-size:13px;">Don't have an account? <a href="/register" style="color:#8a1131; font-weight:700; text-decoration:none;">Register here</a></p>
+    </div>
+</div>
+{% endblock %}
