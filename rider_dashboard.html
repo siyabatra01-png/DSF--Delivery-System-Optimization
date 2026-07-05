@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 950px; margin: 40px auto; padding: 0 20px; font-family: sans-serif;">
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 35px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border-top: 6px solid #8a1131;">
+        <h2 style="color: #8a1131; margin: 0 0 6px 0; font-size: 26px; font-weight: 800;">Fleet Rider Delivery Portal</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 30px;">Update active order logs directly from deployment operations below.</p>
+
+        {% if jobs %}
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                {% for job in jobs %}
+                    <div style="background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="font-size: 16px; color: #1e293b; display: block; margin-bottom: 4px;">Order #{{ job.id }} - {{ job.restaurant_name }}</strong>
+                            <span style="font-size: 13px; color: #64748b; display: block; margin-bottom: 6px;">📦 Items: {{ job.items_summary }}</span>
+                            <span style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 4px; font-weight: 700;">Status: {{ job.status }}</span>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <form action="{{ url_for('rider_update_status', order_id=job.id) }}" method="POST" style="margin: 0; display: flex; gap: 6px;">
+                                <select name="status" style="padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; font-size: 13px;">
+                                    <option value="Placed" {% if job.status == 'Placed' %}selected{% endif %}>Placed</option>
+                                    <option value="Preparing" {% if job.status == 'Preparing' %}selected{% endif %}>Preparing</option>
+                                    <option value="On the Way" {% if job.status == 'On the Way' %}selected{% endif %}>On the Way</option>
+                                    <option value="Delivered" {% if job.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+                                </select>
+                                <button type="submit" style="background: #334155; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;">Update</button>
+                            </form>
+                            <a href="{{ url_for('tracking_dashboard', order_id=job.id) }}" style="background: #8a1131; color: white; text-decoration: none; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700;">Map Vector</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #94a3b8; font-size: 13px; text-align: center; padding: 40px 0;">No active dispatches available on network.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
