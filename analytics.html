@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Data bridge for JS -->
+<div id="analyticsData"
+     data-cuisine-labels='{{ cuisine_labels | safe }}'
+     data-cuisine-values='{{ cuisine_values | safe }}'
+     data-hour-labels='{{ hour_labels | safe }}'
+     data-hour-values='{{ hour_values | safe }}'
+     data-total="{{ total_orders | default(0) }}"
+     style="display:none;"></div>
+
+<style>
+    .analytics-hero {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-radius: var(--radius-lg);
+        padding: 30px 36px;
+        color: white;
+        margin-bottom: 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .analytics-hero h2 { font-family: 'Syne', sans-serif; font-size: 22px; margin-bottom: 4px; }
+    .analytics-hero p  { opacity: 0.6; font-size: 13.5px; }
+    .back-link { color: var(--crimson); font-weight: 600; font-size: 13.5px; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+
+    .kpi-row {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .kpi-box {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 12px;
+        padding: 16px 22px;
+        text-align: center;
+    }
+    .kpi-box .kpi-val { font-size: 36px; font-weight: 800; line-height: 1; }
+    .kpi-box .kpi-lbl { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-top: 4px; }
+
+    .import-btn {
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.18s;
+    }
+    .import-btn:hover { background: rgba(255,255,255,0.25); }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+    }
+    .chart-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 18px; }
+    .chart-wrap { position: relative; height: 280px; }
+    .empty-chart {
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        gap: 8px;
+        text-align: center;
+    }
+    .empty-chart .ei { font-size: 40px; }
+    .empty-chart p { font-size: 13px; }
+</style>
+
+<a href="{{ url_for('admin_hub') }}" class="back-link">← Back to Admin Panel</a>
+<div style="margin-top:16px;"></div>
+
+<div class="analytics-hero">
+    <div>
+        <h2>🍕 MongoDB Analytics Dashboard</h2>
+        <p>Real-time trends processed from unstructured data pool</p>
+    </div>
+    <div class="kpi-row">
+        <div class="kpi-box">
+            <div class="kpi-val">{{ total_orders | default(0) }}</div>
+            <div class="kpi-lbl">Synced Orders</div>
+        </div>
+        <form action="{{ url_for('import_cleaned_orders') }}" method="POST" style="margin:0;">
+            <button type="submit" class="import-btn">📥 Import Cleaned CSV</button>
+        </form>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <!-- Cuisine Bar Chart -->
+    <div class="chart-card">
+        <h4>🍕 Top Demanded Cuisines</h4>
+        {% if cuisine_labels != '[]' %}
+        <div class="chart-wrap"><canvas id="cuisineChart"></canvas></div>
+        {% else %}
+        <div class="empty-chart">
+            <div class="ei">📊</div>
+            <p>No cuisine data yet.</p>
+            <p style="font-size:12px;">Data appears once orders are placed and synced to MongoDB.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Hourly Line Chart -->
+    <div class="chart-card">
+        <h4>⏰ Peak Order Timings (Hourly Trend)</h4>
+        {% if hour_labels != '[]' %}
+        <div class="chart-wrap"><canvas id="hourChart"></canvas></div>
+        {% else %}
+        <div class="empty-chart">
+            <div class="ei">⏱️</div>
+            <p>No hourly data yet.</p>
+            <p style="font-size:12px;">Peak hours chart populates after orders are recorded with timestamps.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bridge = document.getElementById('analyticsData');
+    let cl = [], cv = [], hl = [], hv = [];
+    try {
+        cl = JSON.parse(bridge.dataset.cuisineLabels || '[]');
+        cv = JSON.parse(bridge.dataset.cuisineValues || '[]');
+        hl = JSON.parse(bridge.dataset.hourLabels || '[]');
+        hv = JSON.parse(bridge.dataset.hourValues || '[]');
+    } catch(e) { console.error('Chart parse error:', e); }
+
+    if (cl.length && document.getElementById('cuisineChart')) {
+        new Chart(document.getElementById('cuisineChart'), {
+            type: 'bar',
+            data: {
+                labels: cl,
+                datasets: [{
+                    label: 'Orders',
+                    data: cv,
+                    backgroundColor: 'rgba(138,17,49,0.8)',
+                    borderColor: '#6b0c24',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+            }
+        });
+    }
+
+    if (hl.length && document.getElementById('hourChart')) {
+        new Chart(document.getElementById('hourChart'), {
+            type: 'line',
+            data: {
+                labels: hl.map(h => h + ':00'),
+                datasets: [{
+                    label: 'Order Volume',
+                    data: hv,
+                    borderColor: '#059669',
+                    backgroundColor: 'rgba(5,150,105,0.12)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#059669',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { font: { size: 12 } } } },
+                scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
