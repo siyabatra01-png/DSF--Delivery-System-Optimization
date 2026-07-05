@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .page-header h2 { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--text); }
+    .back-link { color: var(--crimson); font-weight: 600; font-size: 13.5px; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+
+    .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 14px;
+        margin-bottom: 18px;
+    }
+    .search-bar input {
+        border: none;
+        background: transparent;
+        font-size: 14px;
+        outline: none;
+        flex: 1;
+        padding: 0;
+    }
+    .search-bar input:focus { box-shadow: none; }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+        white-space: nowrap;
+    }
+    .status-placed    { background: #eff6ff; color: #2563eb; }
+    .status-preparing { background: #fffbeb; color: #d97706; }
+    .status-dispatched, .status-on-the-way { background: #fef3c7; color: #b45309; }
+    .status-delivered  { background: #ecfdf5; color: #059669; }
+    .status-cancelled  { background: #fef2f2; color: #dc2626; }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 24px;
+        color: var(--text-muted);
+    }
+    .empty-state .ei { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    .table-wrap {
+        background: var(--surface);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .count-pill {
+        background: var(--crimson-light);
+        color: var(--crimson);
+        font-size: 12px;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 20px;
+    }
+</style>
+
+<a href="{{ url_for('admin_hub') }}" class="back-link">← Back to Admin Panel</a>
+
+<div class="page-header">
+    <div>
+        <h2>📦 Comprehensive Orders Log</h2>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:4px;">Orders stored in MongoDB unstructured pool</p>
+    </div>
+    {% if orders %}
+    <span class="count-pill">{{ orders|length }} records</span>
+    {% endif %}
+</div>
+
+{% if orders %}
+<div class="search-bar">
+    <span style="color:var(--text-muted);">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search by restaurant or status…" oninput="filterRows()">
+</div>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>SQL Order Ref</th>
+                <th>Restaurant</th>
+                <th>Cuisine</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody id="ordersBody">
+            {% for order in orders %}
+            <tr class="order-row">
+                <td style="font-family:monospace;font-size:12px;color:var(--text-muted);">
+                    {{ order.get('_id', 'N/A')|string|truncate(16, True, '…') }}
+                </td>
+                <td><strong>#{{ order.get('sql_order_id', '—') }}</strong></td>
+                <td>{{ order.get('restaurant_name', 'N/A') }}</td>
+                <td>{{ order.get('cuisine', '—') }}</td>
+                <td>
+                    {% set s = order.get('status', 'Placed') %}
+                    <span class="status-badge status-{{ s.lower().replace(' ', '-') }}">{{ s }}</span>
+                </td>
+                <td style="color:var(--text-muted);font-size:13px;">
+                    {% if order.get('timestamp') %}
+                        {{ order['timestamp'].strftime('%d %b %Y, %H:%M') if order['timestamp'] is not string else order['timestamp'] }}
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="table-wrap">
+    <div class="empty-state">
+        <div class="ei">📭</div>
+        <p>No orders in the MongoDB store yet.</p>
+        <p style="font-size:12px;margin-top:4px;">Orders appear here after customers complete checkout.</p>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function filterRows() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.order-row').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}
