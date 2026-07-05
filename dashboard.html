@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="background: white; padding: 30px; border-radius: 8px; box-shadow: var(--card-shadow);">
+    <h2 style="color: var(--primary); margin-top:0;">📊 Administrative System Analytics</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <div style="background: #fcf8f9; padding: 30px; border-radius: 8px; border-left: 5px solid var(--primary); text-align: center;">
+            <h3 style="margin:0; color:#555;">Total Orders Tracked</h3>
+            <span style="font-size: 36px; font-weight: bold; color: var(--primary);">{{ sql_c }}</span>
+        </div>
+        <div style="background: #fcf8f9; padding: 30px; border-radius: 8px; border-left: 5px solid var(--slate); text-align: center;">
+            <h3 style="margin:0; color:#555;">System Node Operations</h3>
+            <span style="font-size: 36px; font-weight: bold; color: var(--slate);">Active</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
